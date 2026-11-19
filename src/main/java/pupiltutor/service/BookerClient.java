@@ -98,31 +98,139 @@ public class BookerClient {
             throw new IllegalArgumentException("Not Valid");
         }
 
-        Pupil pupil = pupilClient.getPupil(book.getPupilMatriculation());
-        Integer instrumentGrade = pupil.
-        if ()
-        return null;
+        Pupil pupil = pupilClient.getPupilByMatriculation(book.getPupilMatriculation());
+        if (pupil == null){
+            throw new IllegalArgumentException("No Pupil here");
+        }
+
+        Integer instrumentGrade = pupil.getGradeForInstrument(instrument);
+            if (instrumentGrade == null){
+                throw new IllegalArgumentException("No Instrument grade here");
+            }
+
+        int[] validTutorGrades = tutor.getInstrumentGrades().get(instrument);
+        if (validTutorGrades == null || instrumentGrade < validTutorGrades[0] || instrumentGrade > validTutorGrades[1]){
+            throw new IllegalArgumentException("Grade too low or high for this tutor");
+        }
+
+        for (Booker existingBook : bookings.values()){
+            if (book.getPupilMatriculation().equals(existingBook.getPupilMatriculation()) &&
+                    day.equalsIgnoreCase(existingBook.getDay())){
+                throw new IllegalArgumentException("Pupil has already a booking for today");
+            }
+        }
+
+        if (pupil.getAge() < 16 && startTime.compareTo("18:00") >= 0){
+            throw new IllegalArgumentException("This student is too young to be booking at 6pm onwards");
+        }
+
+        String bookingID = UUID.randomUUID().toString();
+        book.setBookingId(bookingID);
+        book.setDay(day);
+        book.setInstrument(instrument);
+        bookings.put(bookingID, book);
+
+
+        return book;
     }
 
     public List<Booker> getBookingsForPupil(String matriculationNumber) {
-        return null;
+        List<Booker> result = new ArrayList<>();
+        if (matriculationNumber == null){
+            return result;
+        }
+        for (Booker book : bookings.values()){
+            if (matriculationNumber.equals(book.getPupilMatriculation())){
+                result.add(book);
+            }
+        }
+        return result;
     }
 
     public boolean cancelBooking(String bookingId, String matriculationNumber) {
+        if (bookingId == null || matriculationNumber == null){
+            return false;
+        }
+
+        Booker book = bookings.get(bookingId);
+        if (book != null && matriculationNumber.equals(book.getPupilMatriculation())){
+            bookings.remove(bookingId);
+            return true;
+        }
+
         return false;
     }
 
     public List<Booker> getBookingsForTutor(String day) {
-        return null;
+        List<Booker> result = new ArrayList<>();
+        if (day == null){
+            return result;
+        }
+        String bookDay = day.trim().toLowerCase();
+        for (Booker book : bookings.values()){
+            if (bookDay.equals(book.getDay())){
+                result.add(book);
+            }
+        }
+        return result;
     }
 
     public void blockAvailability(String day, String startTime) {
+        if (day == null || day.isBlank()){
+            return;
+        }
+        String blockDay = day.trim().toLowerCase();
+        if (startTime == null || startTime.isBlank()){
+            tutor.getBlockedDays().add(blockDay);
+        } else {
+            tutor.getBlockedSlots().computeIfAbsent(blockDay, blockString -> new HashSet<>()).add(startTime.trim());
+        }
     }
 
     public void unblockAvailability(String day, String startTime) {
+        if(day == null || day.isEmpty()){
+            return;
+        }
+        String removeBlockDay = day.trim().toLowerCase();
+        if (startTime == null || startTime.isBlank()){
+            tutor.getBlockedSlots().remove(removeBlockDay);
+        } else{
+            Set<String> slots = tutor.getBlockedSlots().get(removeBlockDay);
+            if (slots != null){
+                slots.remove(startTime.trim());
+            }
+        }
     }
 
     public List<Booker> checkBookingsAgainstTracker() {
-        return null;
+        List<Booker> badBookings = new ArrayList<>();
+        if (pupilClient == null){
+            return badBookings;
+        }
+
+        for (Booker booking : bookings.values()){
+            Pupil pupil = pupilClient.getPupilByMatriculation(booking.getPupilMatriculation());
+            if (pupil == null) {
+                badBookings.add(booking);
+                continue;
+            }
+            String instrument = booking.getInstrument().trim().toLowerCase();
+            Integer grade = pupil.getGradeForInstrument(instrument);
+            int[] validGrades = tutor.getInstrumentGrades().get(instrument);
+
+            if (grade == null || validGrades == null) {
+                badBookings.add(booking);
+                continue;
+            }
+
+            if (grade < validGrades[0] || grade > validGrades[1]) {
+                badBookings.add(booking);
+                continue;
+            }
+            if (pupil.getAge() < 16 && booking.getStartTime().trim().compareTo("18:00") >= 0) {
+                badBookings.add(booking);
+            }
+        }
+        return badBookings;
     }
 }
