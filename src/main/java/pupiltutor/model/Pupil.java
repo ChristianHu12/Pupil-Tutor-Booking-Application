@@ -16,7 +16,6 @@ public class Pupil {
         this.age = age;
         this.instrumentGrades = instrumentGrades;
     }
-
     public int getAge() {
         return age;
     }

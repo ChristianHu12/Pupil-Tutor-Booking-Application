@@ -9,10 +9,10 @@ public class Booker {
     private String instrument;
     private String day;
     private String startTime;
-    private int pupilAge;
+    private Integer pupilAge;
 
 
-    public Booker(String day, String bookingId, String tutorId, String pupilMatriculation, String pupilName, String instrument, String startTime, int pupilAge) {
+    public Booker(String day, String bookingId, String tutorId, String pupilMatriculation, String pupilName, String instrument, String startTime, Integer pupilAge) {
         this.day = day;
         this.bookingId = bookingId;
         this.tutorId = tutorId;
@@ -83,11 +83,11 @@ public class Booker {
         this.startTime = startTime;
     }
 
-    public int getPupilAge() {
+    public Integer getPupilAge() {
         return pupilAge;
     }
 
-    public void setPupilAge(int pupilAge) {
+    public void setPupilAge(Integer pupilAge) {
         this.pupilAge = pupilAge;
     }
 

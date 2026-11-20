@@ -1,14 +1,15 @@
 package pupiltutor.service;
 
+import org.springframework.stereotype.Service;
 import pupiltutor.model.Pupil;
 import pupiltutor.model.TimeSlots;
 import pupiltutor.model.Booker;
 import pupiltutor.model.Tutor;
 
-import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Service
 public class BookerClient {
 
     private Tutor tutor;
@@ -19,7 +20,7 @@ public class BookerClient {
         this.pupilClient = pupilClient;
         Map<String, int[]> tutorGrades = new LinkedHashMap<>();
 
-        tutorGrades.put("piano", new int[]{3,7});
+        tutorGrades.put("piano", new int[]{1,7});
         tutorGrades.put("guitar", new int[]{1,8});
 
         Set<String> blockedDays = new HashSet<>();
@@ -128,6 +129,8 @@ public class BookerClient {
         book.setBookingId(bookingID);
         book.setDay(day);
         book.setInstrument(instrument);
+        book.setPupilAge(pupil.getAge());
+        book.setPupilName(pupil.getName());
         bookings.put(bookingID, book);
 
 
