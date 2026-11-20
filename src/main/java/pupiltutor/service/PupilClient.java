@@ -1,6 +1,7 @@
 package pupiltutor.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import pupiltutor.model.Pupil;
 import pupiltutor.model.PupilResponseJSON;
@@ -24,10 +25,16 @@ public class PupilClient {
             return null;
         }
 
-        PupilResponseJSON  response= restTemplate.getForObject(
-                baseUrl + "/pupil/" + matriculationNumber,
-                PupilResponseJSON.class
-        );
+        PupilResponseJSON response;
+        try {
+            response = restTemplate.getForObject(
+                    baseUrl + "/pupil/" + matriculationNumber,
+                    PupilResponseJSON.class
+            );
+        } catch (HttpClientErrorException ex) {
+            return null;
+        }
+
         if (response == null || response.pupil == null) {
             return null;
         }

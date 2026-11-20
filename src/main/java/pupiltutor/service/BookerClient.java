@@ -13,20 +13,33 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BookerClient {
 
     private Tutor tutor;
+    private final Map<String, Tutor> tutors = new ConcurrentHashMap<>();
     private final Map<String, Booker> bookings = new ConcurrentHashMap<>();
     private PupilClient pupilClient;
 
     public BookerClient(PupilClient pupilClient) {
         this.pupilClient = pupilClient;
+
         Map<String, int[]> tutorGrades = new LinkedHashMap<>();
+        tutorGrades.put("piano", new int[]{1, 7});
+        tutorGrades.put("guitar", new int[]{1, 8});
+        Tutor firstTutor = new Tutor("T1", "Michael", tutorGrades, new HashSet<>(), new HashMap<>());
 
-        tutorGrades.put("piano", new int[]{1,7});
-        tutorGrades.put("guitar", new int[]{1,8});
+        Map<String, int[]> secondTutorGrades = new LinkedHashMap<>();
+        secondTutorGrades.put("drums", new int[]{1, 8});
+        secondTutorGrades.put("violin", new int[]{1, 6});
+        Tutor secondTutor = new Tutor("T2", "Hannah", secondTutorGrades, new HashSet<>(), new HashMap<>());
 
-        Set<String> blockedDays = new HashSet<>();
-        Map<String, Set<String>> blockedSlots = new HashMap<>();
+        Map<String, int[]> thirdTutorGrades = new LinkedHashMap<>();
+        thirdTutorGrades.put("flute", new int[]{1, 7});
+        thirdTutorGrades.put("piano", new int[]{3, 8});
+        Tutor thirdTutor = new Tutor("T3", "David", thirdTutorGrades, new HashSet<>(), new HashMap<>());
 
-        this.tutor = new Tutor("T1","Michael", tutorGrades, blockedDays, blockedSlots);
+        tutors.put(firstTutor.getTutorId(), firstTutor);
+        tutors.put(secondTutor.getTutorId(), secondTutor);
+        tutors.put(thirdTutor.getTutorId(), thirdTutor);
+
+        this.tutor = firstTutor;
     }
 
     public List<TimeSlots> getAvailability(String day) {
@@ -58,7 +71,7 @@ public class BookerClient {
 
             boolean booked = false;
             for (Booker b : bookings.values()) {
-                if (avalDays.contains(b.getDay()) && startDay.equals(b.getStartTime())) {
+                if (avalDays.contains(b.getDay().toLowerCase()) && startDay.equals(b.getStartTime())) {
                     booked = true;
                     break;
                 }
@@ -103,16 +116,22 @@ public class BookerClient {
         if (pupil == null){
             throw new IllegalArgumentException("No Pupil here");
         }
-
         Integer instrumentGrade = pupil.getGradeForInstrument(instrument);
             if (instrumentGrade == null){
                 throw new IllegalArgumentException("No Instrument grade here");
             }
 
-        int[] validTutorGrades = tutor.getInstrumentGrades().get(instrument);
-        if (validTutorGrades == null || instrumentGrade < validTutorGrades[0] || instrumentGrade > validTutorGrades[1]){
+        Tutor matchedTutor = null;
+        for (Tutor t : tutors.values()) {
+            if (t.isGradeAllowed(instrument, instrumentGrade)) {
+                matchedTutor = t;
+                break;
+            }
+        }
+        if (matchedTutor == null) {
             throw new IllegalArgumentException("Grade too low or high for this tutor");
         }
+        book.setTutorId(matchedTutor.getTutorId());
 
         for (Booker existingBook : bookings.values()){
             if (book.getPupilMatriculation().equals(existingBook.getPupilMatriculation()) &&
@@ -177,7 +196,6 @@ public class BookerClient {
         }
         return result;
     }
-
     public void blockAvailability(String day, String startTime) {
         if (day == null || day.isBlank()){
             return;
@@ -196,7 +214,7 @@ public class BookerClient {
         }
         String removeBlockDay = day.trim().toLowerCase();
         if (startTime == null || startTime.isBlank()){
-            tutor.getBlockedSlots().remove(removeBlockDay);
+            tutor.getBlockedDays().remove(removeBlockDay);
         } else{
             Set<String> slots = tutor.getBlockedSlots().get(removeBlockDay);
             if (slots != null){

@@ -2,74 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Simple CRUD Client for the Welcome Service</title>
+  <title>Tutor View</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; line-height: 1.5; }
+    input, select, button { padding: 5px 8px; margin: 3px 2px; }
+    pre { background: #f5f5f5; padding: 12px; border: 1px solid #ccc; white-space: pre-wrap; word-break: break-word; font-size: 13px; }
+  </style>
 </head>
 <body>
 <div>
-  <input type="text" id="guest_name" placeholder="guest name"/>
-  <select id="guest_lang">
-    <option value="en">en</option>
-    <option value="de">de</option>
-    <option value="fr">fr</option>
-  </select>
-  <button type="button" onclick="ding_request();">ding</button>
+  <button type="button" onclick="window.location.href='pupil.html';">pupil</button>
+  <input type="password" id="t_key" placeholder="tutor api key" size="30"/>
 </div>
 <hr/>
 <div>
-  <input type="text" id="lang" placeholder="language code"/>
-  <input type="text" id="msg" placeholder="pupiltutor phrase"/>
-  <button type="button" onclick="create_request();">create</button>
-  <button type="button" onclick="update_request();">update</button>
-  <button type="button" onclick="delete_request();">delete</button>
-  <button type="button" onclick="read_all_request();">read all</button>
+  <input type="text" id="t_day" placeholder="day"/>
+  <button type="button" onclick="tutor_bookings();">day bookings</button>
+  <button type="button" onclick="check_allBookings();">check all bookings</button>
 </div>
 <hr/>
-<div id="output">
+<div>
+  <input type="text" id="blk_day" placeholder="day"/>
+  <input type="text" id="blk_time" placeholder="start time"/>
+  <button type="button" onclick="set_block('/availability/block');">block</button>
+  <button type="button" onclick="set_block('/availability/unblock');">unblock</button>
 </div>
-
+<hr/>
+<pre id="output"></pre>
 <script>
-
-  const base = 'http://localhost:8080/ding';
+  const base = 'http://localhost:8080';
+  const format_body = (t) => {
+    if (!t) return '';
+    try {
+      return '\n' + JSON.stringify(JSON.parse(t), null, 2);
+    } catch (_) {
+      return ' ' + t;
+    }
+  };
   const show = (r, t) => {
-    document.getElementById('output').innerHTML = r.status + (t ? ' ' + t : '');
+    document.getElementById('output').textContent = r.status + format_body(t);
+  };
+  document.getElementById('t_key').value = sessionStorage.getItem('tKey') || '';
+
+  const t_hdr = () => {
+    const k = document.getElementById('t_key').value.trim();
+    return k ? { 'Authorization': 'Bearer ' + k } : {};
   };
 
-  function ding_request() {
-    let name = document.getElementById('guest_name').value;
-    let lang = document.getElementById('guest_lang').value;
-    let u = base + '/' + encodeURIComponent(lang) + (name ? '?name=' + encodeURIComponent(name) : '');
-    fetch(u).then(r => r.text().then(t => show(r, t))).catch(e => document.getElementById('output').innerHTML = e);
+  function tutor_bookings() {
+    const d = document.getElementById('t_day').value.trim();
+    fetch(base + '/bookings/tutor?day=' + encodeURIComponent(d), { headers: t_hdr() })
+            .then(r => r.text().then(t => show(r, t))).catch(e => document.getElementById('output').textContent = e);
   }
 
-  function read_all_request() {
-    fetch(base).then(r => r.text().then(t => show(r, t))).catch(e => document.getElementById('output').innerHTML = e);
+  function check_allBookings() {
+    fetch(base + '/bookings/check', { headers: t_hdr() })
+            .then(r => r.text().then(t => show(r, t))).catch(e => document.getElementById('output').textContent = e);
   }
 
-  function create_request() {
-    let lang = document.getElementById('lang').value;
-    let msg = document.getElementById('msg').value;
-    fetch(base, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({lang: lang, msg: msg})
-    }).then(r => r.text().then(t => show(r, t))).catch(e => document.getElementById('output').innerHTML = e);
-  }
-
-  function update_request() {
-    let lang = document.getElementById('lang').value;
-    let msg = document.getElementById('msg').value;
-    fetch(base + '/' + encodeURIComponent(lang), {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({lang: lang, msg: msg})
-    }).then(r => r.text().then(t => show(r, t))).catch(e => document.getElementById('output').innerHTML = e);
-  }
-
-  function delete_request() {
-    let lang = document.getElementById('lang').value;
-    fetch(base + '/' + encodeURIComponent(lang), {
-      method: 'DELETE'
-    }).then(r => r.text().then(t => show(r, t))).catch(e => document.getElementById('output').innerHTML = e);
+  function set_block(path) {
+    const d = document.getElementById('blk_day').value.trim();
+    const s = document.getElementById('blk_time').value.trim();
+    const q = s ? '?day=' + encodeURIComponent(d) + '&startTime=' + encodeURIComponent(s) : '?day=' + encodeURIComponent(d);
+    fetch(base + path + q, { method: 'POST', headers: t_hdr() })
+            .then(r => r.text().then(t => show(r, t))).catch(e => document.getElementById('output').textContent = e);
   }
 </script>
 </body>
