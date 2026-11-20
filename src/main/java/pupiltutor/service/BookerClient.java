@@ -237,7 +237,7 @@ public class BookerClient {
             }
             String instrument = booking.getInstrument().trim().toLowerCase();
             Integer grade = pupil.getGradeForInstrument(instrument);
-            int[] validGrades = tutor.getInstrumentGrades().get(instrument);
+            int[] validGrades = tutors.getOrDefault(booking.getTutorId(), tutor).getInstrumentGrades().get(instrument);
 
             if (grade == null || validGrades == null) {
                 badBookings.add(booking);
