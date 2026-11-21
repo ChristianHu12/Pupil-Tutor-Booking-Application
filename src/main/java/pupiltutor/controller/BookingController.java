@@ -55,9 +55,7 @@ public class BookingController {
         return new ResponseEntity<>(slots, HttpStatus.OK);
     }
     @PostMapping("/bookings")
-    public ResponseEntity<Booker> bookLesson(
-            @RequestBody Booker request,
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<Booker> bookLesson(@RequestBody Booker request, @RequestHeader(value = "Authorization", required = false) String authHeader) {
         requirePupil(authHeader);
         try {
             Booker created = bookerClient.createBooking(request);
@@ -68,8 +66,7 @@ public class BookingController {
     }
 
     @GetMapping("/bookings/pupil/{matriculation}")
-    public ResponseEntity<List<Booker>> getPupilBookings(
-            @PathVariable String matriculation,
+    public ResponseEntity<List<Booker>> getPupilBookings(@PathVariable String matriculation,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         requirePupil(authHeader);
         List<Booker> list = bookerClient.getBookingsForPupil(matriculation);
@@ -77,9 +74,7 @@ public class BookingController {
     }
 
     @DeleteMapping("/bookings/{bookingId}")
-    public ResponseEntity<Void> cancelPupilBooking(
-            @PathVariable String bookingId,
-            @RequestParam String matriculation,
+    public ResponseEntity<Void> cancelPupilBooking(@PathVariable String bookingId, @RequestParam String matriculation,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         requirePupil(authHeader);
         boolean cancelled = bookerClient.cancelBooking(bookingId, matriculation);
@@ -89,18 +84,14 @@ public class BookingController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
     @GetMapping("/bookings/tutor")
-    public ResponseEntity<List<Booker>> getTutorBookings(
-            @RequestParam String day,
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<List<Booker>> getTutorBookings(@RequestParam String day, @RequestHeader(value = "Authorization", required = false) String authHeader) {
         requireTutor(authHeader);
         List<Booker> list = bookerClient.getBookingsForTutor(day);
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
     @PostMapping("/availability/block")
-    public ResponseEntity<Void> blockAvailability(
-            @RequestParam String day,
-            @RequestParam(required = false) String startTime,
+    public ResponseEntity<Void> blockAvailability(@RequestParam String day, @RequestParam(required = false) String startTime,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         requireTutor(authHeader);
         bookerClient.blockAvailability(day, startTime);
@@ -108,9 +99,7 @@ public class BookingController {
     }
 
     @PostMapping("/availability/unblock")
-    public ResponseEntity<Void> unblockAvailability(
-            @RequestParam String day,
-            @RequestParam(required = false) String startTime,
+    public ResponseEntity<Void> unblockAvailability(@RequestParam String day, @RequestParam(required = false) String startTime,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         requireTutor(authHeader);
         bookerClient.unblockAvailability(day, startTime);
@@ -118,8 +107,7 @@ public class BookingController {
     }
 
     @GetMapping("/bookings/check")
-    public ResponseEntity<List<Booker>> checkBookingsAgainstTracker(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<List<Booker>> checkBookingsAgainstTracker(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         requireTutor(authHeader);
         List<Booker> issues = bookerClient.checkBookingsAgainstTracker();
         return new ResponseEntity<>(issues, HttpStatus.OK);
