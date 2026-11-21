@@ -1,6 +1,5 @@
 package pupiltutor.model;
 
-import java.util.Locale;
 import java.util.Map;
 
 public class Pupil {
